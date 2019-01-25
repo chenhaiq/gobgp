@@ -1352,6 +1352,8 @@ func (h *FSMHandler) sendMessageloop() error {
 	conn := h.conn
 	fsm := h.fsm
 	ticker := keepaliveTicker(fsm)
+	var holdTime float64
+
 	send := func(m *bgp.BGPMessage) error {
 		if fsm.twoByteAsTrans && m.Header.Type == bgp.BGP_MSG_UPDATE {
 			log.WithFields(log.Fields{
@@ -1374,7 +1376,12 @@ func (h *FSMHandler) sendMessageloop() error {
 			fsm.bgpMessageStateUpdate(0, false)
 			return nil
 		}
-		if err := conn.SetWriteDeadline(time.Now().Add(time.Second * time.Duration(fsm.pConf.Timers.State.NegotiatedHoldTime))); err != nil {
+		if fsm.pConf.Timers.State.NegotiatedHoldTime == 0 {
+			holdTime = 90
+		}else {
+			holdTime = fsm.pConf.Timers.State.NegotiatedHoldTime
+		}
+		if err := conn.SetWriteDeadline(time.Now().Add(time.Second * time.Duration(holdTime))); err != nil {
 			h.errorCh <- FSM_WRITE_FAILED
 			conn.Close()
 			return fmt.Errorf("failed to set write deadline")
