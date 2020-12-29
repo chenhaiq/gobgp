@@ -1118,9 +1118,11 @@ func modNeighbor(cmdType string, args []string) error {
 		params["remote-port"] = PARAM_SINGLE
 		params["mp-graceful-restart"] = PARAM_FLAG
 		params["graceful-restart"] = PARAM_SINGLE
+		params["deferral-time"] = PARAM_SINGLE
 		usage += " [ family <address-families-list> | vrf <vrf-name> | route-reflector-client [<cluster-id>] | " +
 			"route-server-client | allow-own-as <num> | remove-private-as (all|replace) | replace-peer-as | " +
-			"ebgp-multihop-ttl <ttl> | remote-port <port> | mp-graceful-restart | graceful-restart <time> ]"
+			"ebgp-multihop-ttl <ttl> | remote-port <port> | mp-graceful-restart | graceful-restart <time> | " +
+			"deferral-time <time> ]"
 	}
 
 	m, err := extractReserved(args, params)
@@ -1260,10 +1262,22 @@ func modNeighbor(cmdType string, args []string) error {
 			if err != nil {
 				return err
 			}
+			deferralTime := uint64(60)
+			if len(m["deferral-time"]) == 1 {
+				deferralTime, err = strconv.ParseUint(m["deferral-time"][0], 10, 16)
+				if err != nil {
+					return err
+				}
+			}
 			peer.GracefulRestart = config.GracefulRestart{
 				Config: config.GracefulRestartConfig{
-					Enabled:      true,
-					RestartTime:  uint16(restartTime),
+					Enabled:     true,
+					RestartTime: uint16(restartTime),
+					DeferralTime: uint16(deferralTime),
+
+				},
+				State: config.GracefulRestartState{
+					LocalRestarting:     true,
 				},
 			}
 		}
