@@ -1279,6 +1279,9 @@ func modNeighbor(cmdType string, args []string) error {
 				State: config.GracefulRestartState{
 					LocalRestarting:     true,
 				},
+				State: config.GracefulRestartState{
+					LocalRestarting:  true,
+				},
 			}
 		}
 		return nil
